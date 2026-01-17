@@ -1,0 +1,136 @@
+//
+//---errors: 
+//---1:using set() + update() method => txd_fifo class does
+//8 transactions with same data preloaded by set() method (8: deep of fifo)
+//---2: only using write() methods => QuestaSim omit UVM_ERROR: need update()
+//method-> update() method is placed after set() and before write() method
+//---3: read() method does not operates
+//
+class uart_full_frame_seq#(SYS_CLK = 50_000_000, OVERSAMPLE = 16, BAUD_RATE=9600) extends uart_base_seq#(DW, APB_AW);
+	parameter DIVISOR = SYS_CLK/(OVERSAMPLE * BAUD_RATE) - 1;
+	parameter NUMBER = 4;
+	`uvm_object_param_utils(uart_full_frame_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE))
+	//
+	uart_reg_model reg_model_h;
+	//
+	function new(string name = "uart0_full_frame_seq");
+		super.new(name);
+	endfunction
+	//
+	virtual function void set_reg_model_handle(uart_reg_model rm_h);
+		this.reg_model_h = rm_h;
+	endfunction	
+	//
+	virtual task body();
+		uvm_status_e status_h;
+		uvm_reg_data_t wdata_h, rdata_h, mirrored_val;
+		//
+		if(reg_model_h == null) begin
+			`uvm_fatal(get_type_name(), "reg_model_h is NULL")
+		end
+		//============================================
+		//set up control register
+		//============================================
+		assert(reg_model_h.CTRL.randomize() with {
+			reg_model_h.CTRL.parity_case == 2'b01;
+			reg_model_h.CTRL.interrupt_en == 0;}
+		); //even parity and no interrupt
+		//
+		reg_model_h.CTRL.update(status_h, .path(UVM_FRONTDOOR));
+		`uvm_info(get_type_name(), $sformatf("WRITE CONTROL DONE---STATUS = %s!!!", status_h), UVM_MEDIUM)
+		//
+		//mirrored_val = reg_model_h.CTRL.get_mirrored_value();
+		//wdata_h = reg_model_h.CTRL.get(); //desired value
+		//`uvm_info(get_type_name(),
+		//$sformatf("[CONTROL]mirrored_val = %08h --- desired = %08h", mirrored_val, wdata_h), UVM_MEDIUM)
+		//============================================
+		//set up tx_data register
+		//============================================
+		if(reg_model_h.TXD_FF == null) begin
+			`uvm_fatal(get_type_name(), "TXD_FF is NULL!!!")
+		end
+		//
+		gen_tx_data(NUMBER);
+		//
+		foreach(tx_gen_h.tx_dat_fifo[i]) begin
+			wdata_h = tx_gen_h.tx_dat_fifo[i];
+			//reg_model_h.TXD_FF.print();
+			//reg_model_h.TXD_FF.write(status_h, wdata_h);
+			//`uvm_info(get_type_name(), 
+			//$sformatf("[WRITE_TX] DONE:DATA[%0d] = %0h---STATUS[%0d] = %s!!!", i, wdata_h, i, status_h), UVM_LOW)
+			//reg_model_h.TXD_FF.print();
+			//`uvm_info(get_type_name(), $sformatf("[WRITE_TX][%0d]wdata = %0h", i, wdata_h), UVM_MEDIUM)
+			//`uvm_info(get_type_name(), $sformatf("[WRITE_TX][%0d]START", i), UVM_MEDIUM)
+			//reg_model_h.TXD_FF.print();
+			//reg_model_h.TXD_FF.set(wdata_h);
+			//`uvm_info(get_type_name(), $sformatf("[WRITE_TX][%0d]AFTER_SET", i), UVM_MEDIUM)
+			reg_model_h.TXD_FF.print();
+			reg_model_h.TXD_FF.update(status_h); //(*)
+			//
+			`uvm_info(get_type_name(), 
+			$sformatf("[WRITE_TX] UPDATE:DATA[%0d] = %0h---STATUS[%0d] = %s!!!", i, wdata_h, i, status_h), UVM_LOW)
+			//
+			`uvm_info(get_type_name(), $sformatf("[WRITE_TX][%0d]AFTER_UPDATE", i), UVM_MEDIUM)
+			reg_model_h.TXD_FF.print();
+		end
+			//if(reg_model_h.TXD_FF.predict(status_h, wdata_h, .kind(UVM_PREDICT_WRITE))) begin
+				//`uvm_info(get_type_name(), 
+				//$sformatf("[WRITE_TX][%0d]PREDICT--STATUS = %s", i, status_h), UVM_LOW)
+			//end
+			//`uvm_info(get_type_name(), $sformatf("[WRITE_TX][%0d]AFTER_PREDICT", i), UVM_MEDIUM)
+		//
+		//mirrored_val = reg_model_h.TXD.get_mirrored_value();
+		//wdata_h = reg_model_h.TXD.get();
+		//`uvm_info(get_type_name(),
+		//$sformatf("[TX_DATA]mirrored_val = %08h --- desired = %08h", mirrored_val, wdata_h), UVM_MEDIUM)
+		//============================================
+		//set up BBR
+		//============================================
+		//reg_model_h.DIV.print();
+		$cast(wdata_h, DIVISOR);
+		reg_model_h.DIV.write(status_h, wdata_h, .path(UVM_FRONTDOOR));
+		`uvm_info(get_type_name(), $sformatf("WRITE DIVISOR DONE---STATUS = %s!!!", status_h), UVM_LOW)
+		//update desired and mirrored 
+		//if(reg_model_h.DIV.predict(wdata_h, .kind(UVM_PREDICT_WRITE))) begin
+			//`uvm_info(get_type_name(), "[BRR_VALUE]---update mirrored value!!!", UVM_MEDIUM)
+		//end
+		//reg_model_h.DIV.print();
+		//
+		//mirrored_val = reg_model_h.DIV.get_mirrored_value();
+		//wdata_h = reg_model_h.DIV.get();
+		//`uvm_info(get_type_name(),
+		//$sformatf("[BRR_VALUE]mirrored_val = %08h --- desired = %08h", mirrored_val, wdata_h), UVM_MEDIUM)
+		//============================================
+		//Read Status and RX_data
+		//============================================
+		#(DIVISOR*OVERSAMPLE*14*4*`CLK_CYCLE);
+		//---(1)
+		//reg_model_h.STATUS.print();
+		reg_model_h.STATUS.mirror(status_h, UVM_CHECK);
+		
+		if(reg_model_h.STATUS.predict(status_h, .kind(UVM_PREDICT_READ))) begin
+			`uvm_info(get_type_name(), $sformatf("[BEFORE_READ_RX]---STATUS = %s!!!", status_h), UVM_LOW)
+		end
+		//reg_model_h.STATUS.read(status_h, rdata_h);
+		//=> expect rx_not_empty---7th bit is HIGH
+		//reg_model_h.STATUS.print();
+		//---(2)
+		reg_model_h.RXD_FF.mirror(status_h, UVM_CHECK);
+		`uvm_info(get_type_name(), $sformatf("[READ_RX]---STATUS = %s!!!", status_h), UVM_LOW)
+		reg_model_h.RXD_FF.set_compare(UVM_CHECK);
+		if(reg_model_h.RXD_FF.predict(status_h, .kind(UVM_PREDICT_READ))) begin
+			`uvm_info(get_type_name(), $sformatf("[READ_RX]PREDICT---STATUS = %s!!!", status_h), UVM_LOW)
+		end
+		//reg_model_h.RXD.read(status_h, rdata_h, .path(UVM_FRONTDOOR));
+		//---(3)
+		reg_model_h.STATUS.mirror(status_h, UVM_CHECK);
+		if(reg_model_h.STATUS.predict(status_h, .kind(UVM_PREDICT_READ))) begin
+			`uvm_info(get_type_name(), $sformatf("[AFTER_READ_RX]---STATUS = %s!!!", status_h), UVM_LOW)
+		end
+		//reg_model_h.STATUS.read(status_h, rdata_h, .path(UVM_FRONTDOOR));
+		//=> expect rx_not_empty---7th bit is LOW 
+		//=> expect trans_empty ---9th bit is HIGH
+	endtask
+	//
+endclass
+
