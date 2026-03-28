@@ -71,20 +71,20 @@ class uart_monitor extends uvm_monitor;
 		bit [UART_DW-1:0] brr_value;
 		bit have_parity;
 	} ctrl_info;
-	//
-	ctrl_info ctrl_info_h;
-	uvm_put_port#(ctrl_info) put_port;
-	uvm_get_port#(ctrl_info) get_port;
-	uvm_tlm_fifo#(ctrl_info) ctrl_tlm_fifo;
+	////
+	//ctrl_info ctrl_info_h;
+	//uvm_put_port#(ctrl_info) put_port;
+	//uvm_get_port#(ctrl_info) get_port;
+	//uvm_tlm_fifo#(ctrl_info) ctrl_tlm_fifo;
 	//others
 	bit parity_exist;
 	bit [UART_DW-1:0] clk_used_per_bit;
 	//second thread of run_phase task
-	logic [UART_DW-1:0] rx_brr_value;
-	bit rx_parity_exist;
-	ctrl_info ctrl_info_h2;
-	bit config_avail_flag;
-	int k;
+	//logic [UART_DW-1:0] rx_brr_value;
+	//bit rx_parity_exist;
+	//ctrl_info ctrl_info_h2;
+	logic config_avail_flag;
+	int k, h;
 	//
 	function new (string name = "uart_monitor", uvm_component parent = null);
 		super.new(name, parent);
@@ -99,16 +99,17 @@ class uart_monitor extends uvm_monitor;
 		//
 		tx_to_scb_ap = new("tx_to_scb_ap", this);
 		rx_to_scb_ap = new("rx_to_scb_ap", this);
-		put_port = new("put_port", this);
-		get_port = new("get_port", this);
-		ctrl_tlm_fifo = new("CONTROL_TLM_FIFO", this, 2);
+		//put_port = new("put_port", this);
+		//get_port = new("get_port", this);
+		//ctrl_tlm_fifo = new("CONTROL_TLM_FIFO", this, 2);
 		k = 0;
+		h = 0;
 	endfunction
 	//
-	virtual function void connect_phase(uvm_phase phase);
-		this.put_port.connect(ctrl_tlm_fifo.put_export);
-		this.get_port.connect(ctrl_tlm_fifo.get_export);
-	endfunction
+	//virtual function void connect_phase(uvm_phase phase);
+		//this.put_port.connect(ctrl_tlm_fifo.put_export);
+		//this.get_port.connect(ctrl_tlm_fifo.get_export);
+	//endfunction
 	//
 	virtual task run_phase(uvm_phase phase);
 		fork
@@ -119,55 +120,70 @@ class uart_monitor extends uvm_monitor;
 		end
 		//
 		forever begin: CAPTURE_UART_CONTROL
+			`uvm_info(get_type_name(), "[UART_CTRL_INFO]PREPARED TO CAPTURE!!!", UVM_MEDIUM)
+			//
 			wait(uart_vif.rst_n == 1'b1);	
 			fork
 			capture_parity(parity_exist);
 			capture_brr(clk_used_per_bit);
 			join
-			`uvm_info(get_type_name(), "[UART_CTRL_INFO]CAPTURED!!!", UVM_MEDIUM)
+		end
+		//	begin
+		forever begin: CAPTURE_RX
+				if((config_avail_flag === 1'bx) || config_avail_flag === 1'b1) begin
+			`uvm_info(get_type_name(), "[UART_CTRL_INFO] WAIT CLK_USED_PER_BIT CHANGED!!!", UVM_MEDIUM)
+				@clk_used_per_bit;//wait until change of clk_used_per_bit
+			`uvm_info(get_type_name(), "[UART_CTRL_INFO]CLK_USED_PER_BIT CHANGED!!!", UVM_MEDIUM)
+				end
+			`uvm_info(get_type_name(), $sformatf("[MONITOR TASK]PREPARE TO capture rx_data[%0d]!!!", ++h), UVM_MEDIUM)
+				monitor(clk_used_per_bit, parity_exist, config_avail_flag);
+			//end
+			//`uvm_info(get_type_name(), "[UART_CTRL_INFO]CAPTURED!!!", UVM_MEDIUM)
 			//
-			ctrl_info_h.brr_value = clk_used_per_bit - 1'b1;
-			ctrl_info_h.have_parity = parity_exist;
+			//ctrl_info_h.brr_value = clk_used_per_bit - 1'b1;
+			//ctrl_info_h.have_parity = parity_exist;
+			////
+			//if(!ctrl_tlm_fifo.try_put(ctrl_info_h)) begin
+				//`uvm_error(get_type_name(), "CTRL_TLM_FIFO is FULL!!!")
+			//end
 			//
-			if(!ctrl_tlm_fifo.try_put(ctrl_info_h)) begin
-				`uvm_error(get_type_name(), "CTRL_TLM_FIFO is FULL!!!")
-			end
 		end
 		//--------------------------------------------//
-		forever begin: MONITOR_RX
-			wait(uart_vif.rst_n == 1'b1);	
-			if(rx_brr_value === {UART_DW{1'bx}} || (config_avail_flag == 1'b1)) begin
-				while(1) begin
-					@(uart_vif.uart_mon_cb);
-					if(ctrl_tlm_fifo.try_get(ctrl_info_h2)) begin
-						break;
-					end
-				end
-				//
-				config_avail_flag = 0;
-				`uvm_info(get_type_name(), "[UART_CTRL_INFO]RECEIVED!!!", UVM_MEDIUM)
-				rx_brr_value = ctrl_info_h2.brr_value;
-				rx_parity_exist = ctrl_info_h2.have_parity;
-				display(ctrl_info_h2);
-			end
-			//else begin
-				//if(ctrl_tlm_fifo.try_get(ctrl_info_h2)) begin
-					//rx_brr_value = ctrl_info_h2.brr_value;
-					//rx_parity_exist = ctrl_info_h2.have_parity;
-					//`uvm_info(get_type_name(), "[RUNNING]Succeed to get new UART control info", UVM_LOW)
-					//display(ctrl_info_h2);
-				//end
+		//forever begin: MONITOR_RX
+			//wait(uart_vif.rst_n == 1'b1);	
+			//if(rx_brr_value === {UART_DW{1'bx}} || (config_avail_flag == 1'b1)) begin
+				////while(1) begin
+					////@(uart_vif.uart_mon_cb);
+					////if(ctrl_tlm_fifo.try_get(ctrl_info_h2)) begin
+						////break;
+					////end
+				////end
+				////
+				//config_avail_flag = 0;
+				//`uvm_info(get_type_name(), "[UART_CTRL_INFO]RECEIVED!!!", UVM_MEDIUM)
+				////rx_brr_value = ctrl_info_h2.brr_value;
+				////rx_parity_exist = ctrl_info_h2.have_parity;
+				////display(ctrl_info_h2);
 			//end
-			`uvm_info(get_type_name(), "CALL monitor task!!!", UVM_MEDIUM)
-			//
-			monitor(rx_brr_value, rx_parity_exist, config_avail_flag);
-		end
+			////else begin
+				////if(ctrl_tlm_fifo.try_get(ctrl_info_h2)) begin
+					////rx_brr_value = ctrl_info_h2.brr_value;
+					////rx_parity_exist = ctrl_info_h2.have_parity;
+					////`uvm_info(get_type_name(), "[RUNNING]Succeed to get new UART control info", UVM_LOW)
+					////display(ctrl_info_h2);
+				////end
+			////end
+			//`uvm_info(get_type_name(), "CALL monitor task!!!", UVM_MEDIUM)
+			////
+			//monitor(rx_brr_value, rx_parity_exist, config_avail_flag);
+		//end
 		join_none
 	endtask
 	//
 	//collect rx
 	//
 	virtual task monitor(input bit [UART_DW-1:0] brr_value, input bit parity_exist, output bit config_avail_flag);
+			config_avail_flag = 0;
 		fork
 			begin
 			@(uart_vif.uart_mon_cb iff (uart_vif.uart_mon_cb.ctrl_valid || uart_vif.uart_mon_cb.brr_valid));
@@ -176,10 +192,10 @@ class uart_monitor extends uvm_monitor;
 			end
 			//
 			begin
-			collect_rx(rx_brr_value, rx_parity_exist);
+			collect_rx(brr_value, parity_exist);
 			end
 		join_any
-		disable fork; //as new configuration exist, process exists right away
+		disable fork; //as new configuration appears, process exits right away
 	endtask
 	//
 	//capture control
@@ -193,9 +209,9 @@ class uart_monitor extends uvm_monitor;
 	endtask
 	//
 	//
-	virtual task capture_brr(output bit [UART_DW-1:0] clk_per_bit);
+	virtual task automatic capture_brr(ref bit [UART_DW-1:0] clk_per_bit);
 		@(uart_vif.uart_mon_cb iff uart_vif.uart_mon_cb.brr_valid);
-		clk_per_bit = uart_vif.uart_mon_cb.clk_per_bit;
+		clk_per_bit = uart_vif.uart_mon_cb.clk_per_bit - 1'b1;
 		//
 		`uvm_info(get_type_name(), 
 		$sformatf("[CAPTURE_CTRL] clk_per_bit = %08h!!!", clk_per_bit), UVM_MEDIUM)

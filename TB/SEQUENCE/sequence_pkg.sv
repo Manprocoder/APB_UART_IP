@@ -282,13 +282,13 @@ endclass
 //configure odd parity to make up parity error plot
 //
 //==========================================================================================================
-class parity_frame_error_seq#(SYS_CLK = 50_000_000, OVERSAMPLE = 16, BAUD_RATE=9600) extends uart_base_seq#(DW, APB_AW);
+class parity_frame_break_error_seq#(SYS_CLK = 50_000_000, OVERSAMPLE = 16, BAUD_RATE=9600) extends uart_base_seq#(DW, APB_AW);
 	parameter logic [15:0] DIVISOR = SYS_CLK/(OVERSAMPLE * BAUD_RATE) - 1;
 	parameter BEFORE_RXD = 32'h0000_0080;
 	parameter AFTER_RXD = 32'h0000_0087;
-	`uvm_object_param_utils(parity_frame_error_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE))
+	`uvm_object_param_utils(parity_frame_break_error_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE))
 	//
-	function new(string name = "parity_frame_error_seq");
+	function new(string name = "parity_frame_break_error_seq");
 		super.new(name);
 	endfunction
 	//

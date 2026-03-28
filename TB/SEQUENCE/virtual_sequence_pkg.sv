@@ -42,8 +42,8 @@ package virtual_sequence_pkg;
 		parameter BAUD_RATE_2 = 115200;
 		typedef uart_rst_sequence#(DW, APB_AW) rst_seq;
 		typedef uart_even_parity_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE) uart_even_parity_seq;
-		typedef parity_frame_error_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE) pe_fe_0_seq;
-		typedef parity_frame_error_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE_2) pe_fe_1_seq;
+		typedef parity_frame_break_error_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE) pe_fe_0_seq;
+		typedef parity_frame_break_error_seq#(SYS_CLK, OVERSAMPLE, BAUD_RATE_2) pe_fe_1_seq;
 		//
 		//reset sequence
 		rst_seq rst0_seq_h, rst1_seq_h;

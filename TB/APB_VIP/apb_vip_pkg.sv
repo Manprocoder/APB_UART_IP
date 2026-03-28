@@ -328,18 +328,18 @@ task apb_driver::drive(inout REQ packet);
 	//
 	if(active_low_rst == 1'b1) begin //drive_info
 		`uvm_info(get_type_name(), "Prepare to drive transaction", UVM_HIGH) //assume: 50ns
-		@(apb_drv_vif.m_drv_cb); //clocking block: 50ns 
+		@(apb_drv_vif.m_drv_cb); //clocking block: 70ns IF 50ns is NOT first clock edge ELSE clocking block 50ns 
 		`uvm_info(get_type_name(), "Drive PSEL", UVM_HIGH) //70ns
 		apb_drv_vif.m_drv_cb.psel <= 1'b1;
 		apb_drv_vif.m_drv_cb.penable <= 1'b0;
 		apb_drv_vif.m_drv_cb.pwrite <= packet.write;
 		apb_drv_vif.m_drv_cb.paddr <= packet.addr;
 		apb_drv_vif.m_drv_cb.pwdata <= packet.data;
-		@(apb_drv_vif.m_drv_cb); //70ns
+		@(apb_drv_vif.m_drv_cb); //90ns
 		apb_drv_vif.m_drv_cb.penable <= 1'b1;
 		//wait pready
 		`uvm_info(get_type_name(), $sformatf("WAITING PREADY---MASTER AGENT!!!"), UVM_HIGH); //90ns
-		@(apb_drv_vif.m_drv_cb iff apb_drv_vif.m_drv_cb.pready); //90ns
+		@(apb_drv_vif.m_drv_cb iff apb_drv_vif.m_drv_cb.pready); //110ns
 		if(packet.write == 1'b0) begin
 			packet.data = apb_drv_vif.m_drv_cb.prdata;
 		end

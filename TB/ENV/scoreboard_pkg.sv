@@ -233,13 +233,13 @@ typedef uvm_tlm_analysis_fifo#(uart_seq_item) uart_fifo;
 				//
 				if(exp_data == act_data) begin
 					`uvm_info(get_type_name(), 
-					$sformatf("[FULL: UART0_TX_UART1_RX]MATCH--> exp = %08b --- act = %08b",
+					$sformatf("[PARALEL-PARALEL: UART0_TX_UART1_RX]MATCH--> exp = %08b --- act = %08b",
 				       	exp_data, act_data), UVM_LOW)
 					data_match++;
 				end
 				else begin
 					`uvm_info(get_type_name(), 
-					$sformatf("[FULL: UART0_TX_UART1_RX]MISMATCH--> exp = %08b --- act = %08b",
+					$sformatf("[PARALEL-PARALEL: UART0_TX_UART1_RX]MISMATCH--> exp = %08b --- act = %08b",
 				       	exp_data, act_data), UVM_LOW)
 					data_mismatch++;
 				end
@@ -257,7 +257,7 @@ typedef uvm_tlm_analysis_fifo#(uart_seq_item) uart_fifo;
 		`uvm_info(get_type_name(), $sformatf("BUS--MIRRORED(mirrored updated???): %0d UPDATED---%0d STALE ",
 		 apb_rm_match, apb_rm_mismatch), UVM_LOW)
 		 //
-		`uvm_info(get_type_name(), $sformatf("UART0_TX_DATA--UART1_RX: %0d matches---%0d mismatches ",
+		`uvm_info(get_type_name(), $sformatf("UART0_TX_DATA(paralel)--UART1_RX(Serial): %0d matches---%0d mismatches ",
 		 uart_01_match, uart_01_mismatch), UVM_LOW)
 		 //
 		`uvm_info(get_type_name(), $sformatf("DATA_FULL: %0d matches---%0d mismatches ",
