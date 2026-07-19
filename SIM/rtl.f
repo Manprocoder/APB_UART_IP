@@ -1,0 +1,11 @@
++incdir+../rtl
+../rtl/rx_fifo.v
+../rtl/tx_fifo.v
+../rtl/RiSi_Edge_Detector.v
+../rtl/uart_reg_bank.v 
+../rtl/baud_rate_generator.v
+../rtl/uart_transmitter.v
+../rtl/uart_receiver.v
+../rtl/apb_slave.v   
+../rtl/uart_top.v  
+../rtl/uart_wrapper.v

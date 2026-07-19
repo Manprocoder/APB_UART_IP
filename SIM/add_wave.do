@@ -1,7 +1,7 @@
 #==========================================================
 #Project: Design APB-UART IP core
-#File name: uvm_list.svh 
-#Description: contains all UVM components
+#File name: add_wave.do 
+#Description: 
 #==========================================================
 onerror {resume}
 quietly WaveActivateNextPane {} 0
@@ -10,13 +10,13 @@ add wave -noupdate -bin /tb/uart0_if/clk
 add wave -noupdate -bin /tb/uart0_if/ctrl_valid
 add wave -noupdate -bin /tb/uart0_if/parity_en
 add wave -noupdate -bin /tb/uart0_if/brr_valid
-add wave -noupdate -hex /tb/uart0_if/clk_per_bit
+add wave -noupdate -hex /tb/uart0_if/brr_value
 add wave -noupdate -divider -height 25 {UART1_VIRTUAL}
 add wave -noupdate -bin /tb/uart1_if/clk
 add wave -noupdate -bin /tb/uart1_if/ctrl_valid
 add wave -noupdate -bin /tb/uart1_if/parity_en
 add wave -noupdate -bin /tb/uart1_if/brr_valid
-add wave -noupdate -hex /tb/uart1_if/clk_per_bit
+add wave -noupdate -hex /tb/uart1_if/brr_value
 add wave -noupdate -divider -height 23 {APB0_INTERFACE}
 add wave -noupdate /tb/uart0_wrap/pclk
 add wave -noupdate /tb/uart0_wrap/presetn
@@ -28,10 +28,11 @@ add wave -noupdate -hex /tb/uart0_wrap/pwdata
 add wave -noupdate -hex /tb/uart0_wrap/prdata
 add wave -noupdate -hex /tb/uart0_wrap/pready
 add wave -noupdate -hex /tb/uart0_wrap/apb_inst/cs
+add wave -noupdate -hex /tb/uart0_wrap/apb_inst/en_o
 add wave -noupdate -hex /tb/uart0_wrap/apb_inst/wr_en_o
-add wave -noupdate -hex /tb/uart0_wrap/apb_inst/rd_en_o
 add wave -noupdate -hex /tb/uart0_wrap/apb_inst/addr_o
 add wave -noupdate -hex /tb/uart0_wrap/apb_inst/wdata_o
+add wave -noupdate -bin /tb/uart0_wrap/apb_inst/pready_i
 add wave -noupdate -hex /tb/uart0_wrap/apb_inst/rdata_i
 add wave -noupdate -divider -height 24 {APB1_INTERFACE}
 add wave -noupdate /tb/uart1_wrap/pclk
@@ -44,17 +45,19 @@ add wave -noupdate -hex /tb/uart1_wrap/pwdata
 add wave -noupdate -hex /tb/uart1_wrap/prdata
 add wave -noupdate -hex /tb/uart1_wrap/pready
 add wave -noupdate -hex /tb/uart1_wrap/apb_inst/cs
+add wave -noupdate -hex /tb/uart1_wrap/apb_inst/en_o
 add wave -noupdate -hex /tb/uart1_wrap/apb_inst/wr_en_o
-add wave -noupdate -hex /tb/uart1_wrap/apb_inst/rd_en_o
 add wave -noupdate -hex /tb/uart1_wrap/apb_inst/addr_o
 add wave -noupdate -hex /tb/uart1_wrap/apb_inst/wdata_o
+add wave -noupdate -bin /tb/uart1_wrap/apb_inst/pready_i
 add wave -noupdate -hex /tb/uart1_wrap/apb_inst/rdata_i
 add wave -noupdate -divider -height 25 {UART0_BAUD_TICK}
 add wave -noupdate -bin /tb/uart0_wrap/uart_top/enable
 add wave -noupdate -hex /tb/uart0_wrap/uart_top/divisor_val
 add wave -noupdate -hex /tb/uart0_wrap/uart_top/br_gen_inst/counter
-add wave -noupdate -bin /tb/uart0_wrap/uart_top/br_gen_inst/baud_tick_active
+add wave -noupdate -bin /tb/uart0_wrap/uart_top/br_gen_inst/baud_tick_o
 add wave -noupdate -divider -height 25 {UART0_INTERFACE}
+add wave -noupdate -hex /tb/uart0_wrap/uart_top/uart_tmt_inst/tx_shift_reg
 add wave -noupdate -bin /tb/uart0_wrap/tx
 add wave -noupdate -bin /tb/uart0_wrap/rx
 add wave -noupdate -bin /tb/uart0_wrap/uart_top/baud_tick
@@ -62,9 +65,12 @@ add wave -noupdate -hex /tb/uart0_wrap/uart_top/uart_tmt_inst/shift_cnt
 add wave -noupdate -bin /tb/uart0_wrap/uart_top/uart_tmt_inst/shift_en
 add wave -noupdate -hex /tb/uart0_wrap/uart_top/uart_tmt_inst/txt_cs
 add wave -noupdate -bin /tb/uart0_wrap/uart_top/uart_tmt_inst/tx_fifo_wr
+add wave -noupdate -bin /tb/uart0_wrap/uart_top/uart_tmt_inst/tx_fifo_i
 add wave -noupdate -bin /tb/uart0_wrap/uart_top/uart_tmt_inst/tx_fifo_rd
+add wave -noupdate -bin /tb/uart0_wrap/uart_top/uart_tmt_inst/tx_fifo_o
 add wave -noupdate -bin /tb/uart0_wrap/uart_top/uart_tmt_inst/tx_fifo_empty
 add wave -noupdate -divider -height 24 {UART1_INTERFACE}
+add wave -noupdate -hex /tb/uart1_wrap/uart_top/uart_tmt_inst/tx_shift_reg
 add wave -noupdate -bin /tb/uart1_wrap/tx
 add wave -noupdate -bin /tb/uart1_wrap/rx
 add wave -noupdate -bin /tb/uart1_wrap/uart_top/baud_tick
@@ -79,6 +85,11 @@ add wave -noupdate -bin /tb/uart1_wrap/uart_top/uart_rcv_inst/rx_fifo_rd
 add wave -noupdate -hex /tb/uart1_wrap/uart_top/uart_rcv_inst/rx_fifo_o
 add wave -noupdate -divider -height 24 {UART1_REG_BANK}
 add wave -noupdate -bin /tb/uart1_wrap/uart_top/uart_reg_bank_inst/rx_not_empty_i
+add wave -noupdate -bin /tb/uart1_wrap/uart_top/uart_reg_bank_inst/frame_err_i
+add wave -noupdate -bin /tb/uart1_wrap/uart_top/uart_reg_bank_inst/parity_err_i
+add wave -noupdate -bin /tb/uart1_wrap/uart_top/uart_reg_bank_inst/break_bit_i
+add wave -noupdate -bin /tb/uart1_wrap/uart_top/uart_reg_bank_inst/tx_overrun_i
+add wave -noupdate -bin /tb/uart1_wrap/uart_top/uart_reg_bank_inst/rx_overrun_i
 #add wave -noupdate -divider -height 25 {APB0_DRIVER}
 #add wave -noupdate /uvm_root/uvm_test_top/env_h/apb_agt_h0/apb_drv_h/active_low_rst
 #add wave -noupdate -divider -height 25 {APB1_DRIVER}
